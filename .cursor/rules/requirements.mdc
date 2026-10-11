@@ -1,0 +1,14 @@
+---
+description: Story and acceptance criteria format
+globs: docs/requirements/**
+alwaysApply: false
+---
+
+# Story and acceptance criteria format
+
+- One story per file: `docs/requirements/stories/<slug>.md`
+- Front matter: `jira` (key or blank), `epic`, `epic_key` (blank until synced), `status` (`draft` | `in-progress` | `done`), `version` (start at 1; add 1 whenever the AC change), `last_synced`
+- Story line: `As a <role>, I want <capability>, so that <benefit>`
+- Acceptance criteria: numbered AC1, AC2… in Given / When / Then form
+- Each AC must be testable; no words like "fast" or "easy" without a number
+- Add an "Open questions" section instead of guessing

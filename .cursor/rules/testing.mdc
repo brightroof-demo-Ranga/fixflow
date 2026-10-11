@@ -1,0 +1,12 @@
+---
+description: How tests are named and handled
+globs: src/**/*.test.ts, tests/**
+alwaysApply: false
+---
+
+# How tests are named and handled
+
+- Every test name starts with the Jira key and AC id: `"FIX-<n> AC<k>: <behaviour>"`
+- Prefer one test per acceptance criterion
+- Never delete or weaken a failing test to make CI pass; fix the code, or flag the AC as wrong
+- Unit tests live next to the code in `src/` as `*.test.ts`; browser tests live in `tests/` as `*.spec.ts`
