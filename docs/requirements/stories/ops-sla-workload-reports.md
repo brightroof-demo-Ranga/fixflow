@@ -1,10 +1,10 @@
 ---
-jira:
+jira: FIX-27
 epic: Operations reporting
-epic_key:
+epic_key: FIX-15
 status: draft
 version: 2
-last_synced:
+last_synced: 2026-10-12
 ---
 
 # Ops SLA and workload reports

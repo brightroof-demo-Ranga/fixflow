@@ -1,10 +1,10 @@
 ---
-jira:
+jira: FIX-25
 epic: Customer status
-epic_key:
+epic_key: FIX-13
 status: draft
 version: 4
-last_synced:
+last_synced: 2026-10-12
 ---
 
 # Customer tracking link

@@ -1,10 +1,10 @@
 ---
-jira:
+jira: FIX-24
 epic: Field updates
-epic_key:
+epic_key: FIX-12
 status: draft
 version: 2
-last_synced:
+last_synced: 2026-10-12
 ---
 
 # Attach photos

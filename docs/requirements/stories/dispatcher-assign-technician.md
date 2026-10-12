@@ -1,10 +1,10 @@
 ---
-jira:
+jira: FIX-21
 epic: Dispatch and assign
-epic_key:
+epic_key: FIX-11
 status: draft
 version: 3
-last_synced:
+last_synced: 2026-10-12
 ---
 
 # Dispatcher assign technician
