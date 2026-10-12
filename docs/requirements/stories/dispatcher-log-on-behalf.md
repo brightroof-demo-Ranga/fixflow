@@ -1,10 +1,10 @@
 ---
-jira:
+jira: FIX-20
 epic: Capture service requests
-epic_key:
+epic_key: FIX-10
 status: draft
 version: 4
-last_synced:
+last_synced: 2026-10-12
 ---
 
 # Dispatcher log on behalf

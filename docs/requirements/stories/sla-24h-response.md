@@ -1,10 +1,10 @@
 ---
-jira:
+jira: FIX-29
 epic: Critical SLA
-epic_key:
+epic_key: FIX-14
 status: draft
 version: 3
-last_synced:
+last_synced: 2026-10-12
 ---
 
 # SLA 24-hour response

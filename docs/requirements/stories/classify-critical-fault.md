@@ -1,10 +1,10 @@
 ---
-jira:
+jira: FIX-28
 epic: Critical SLA
-epic_key:
+epic_key: FIX-14
 status: draft
 version: 2
-last_synced:
+last_synced: 2026-10-12
 ---
 
 # Classify critical fault

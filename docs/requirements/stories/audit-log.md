@@ -1,10 +1,10 @@
 ---
-jira:
+jira: FIX-18
 epic: Platform
-epic_key:
+epic_key: FIX-9
 status: draft
 version: 2
-last_synced:
+last_synced: 2026-10-12
 ---
 
 # Audit log

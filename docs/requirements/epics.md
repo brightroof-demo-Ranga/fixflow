@@ -1,10 +1,10 @@
 # FixFlow epics
 
-Each epic lists its stories (files under `docs/requirements/stories/`). Jira keys stay blank until sync.
+Each epic lists its stories (files under `docs/requirements/stories/`). Jira keys were written on 2026-10-12.
 
 ---
 
-## 1. Platform
+## 1. Platform (FIX-9)
 
 **Goal:** Only BrightRoof staff can assign and update jobs; each staff user has a role; create/assign/update actions are attributable so warranty response can be proved.
 
@@ -16,7 +16,7 @@ Each epic lists its stories (files under `docs/requirements/stories/`). Jira key
 
 ---
 
-## 2. Capture service requests
+## 2. Capture service requests (FIX-10)
 
 **Goal:** A request exists for every problem that should not be lost — customers log without accounts; dispatchers enter WhatsApp and phone work on the customer’s behalf.
 
@@ -27,7 +27,7 @@ Each epic lists its stories (files under `docs/requirements/stories/`). Jira key
 
 ---
 
-## 3. Dispatch and assign
+## 3. Dispatch and assign (FIX-11)
 
 **Goal:** A dispatcher assigns a technician so the job has an owner instead of sitting only in a sheet, and can cancel a request the customer no longer wants.
 
@@ -38,7 +38,7 @@ Each epic lists its stories (files under `docs/requirements/stories/`). Jira key
 
 ---
 
-## 4. Field updates
+## 4. Field updates (FIX-12)
 
 **Goal:** Technicians update jobs from their phones; photos can be attached so the fault is clearer.
 
@@ -49,7 +49,7 @@ Each epic lists its stories (files under `docs/requirements/stories/`). Jira key
 
 ---
 
-## 5. Customer status
+## 5. Customer status (FIX-13)
 
 **Goal:** Customers stop calling “when is someone coming?” — they get a tracking link with no account, and SMS (must).
 
@@ -60,7 +60,7 @@ Each epic lists its stories (files under `docs/requirements/stories/`). Jira key
 
 ---
 
-## 6. Critical SLA
+## 6. Critical SLA (FIX-14)
 
 **Goal:** Critical faults use the workshop definition; ops can prove whether a technician was on site or remote diagnosis completed within 24 hours of the request.
 
@@ -71,7 +71,7 @@ Each epic lists its stories (files under `docs/requirements/stories/`). Jira key
 
 ---
 
-## 7. Operations reporting
+## 7. Operations reporting (FIX-15)
 
 **Goal:** Management can see what is going on: open jobs, SLA breaches, average time to resolve, jobs per technician per week.
 

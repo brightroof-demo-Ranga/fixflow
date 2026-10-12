@@ -1,10 +1,10 @@
 ---
-jira:
+jira: FIX-23
 epic: Field updates
-epic_key:
+epic_key: FIX-12
 status: draft
 version: 3
-last_synced:
+last_synced: 2026-10-12
 ---
 
 # Technician update job
