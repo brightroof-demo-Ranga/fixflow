@@ -281,6 +281,7 @@ test("FIX-21 AC3: a signed-out user or a technician leaves the assignee unchange
   const technicianA = await createStaff("technician", "Ben Tech");
   const technicianB = await createStaff("technician", "Cara Tech");
   const actingTechnician = await createStaff("technician", "Dan Tech");
+  const opsManager = await createStaff("ops_manager", "Cam Ops");
   const { requestId, phone, systemKey } = await createRequest();
   const { getDb } = await import("./db");
   const assignedAt = new Date("2026-10-13T08:00:00.000Z");
@@ -295,7 +296,7 @@ test("FIX-21 AC3: a signed-out user or a technician leaves the assignee unchange
     },
   });
 
-  const callers = [null, await sessionToken(actingTechnician)];
+  const callers = [null, await sessionToken(actingTechnician), await sessionToken(opsManager)];
   for (const token of callers) {
     const response = await postAssignment(requestId, { technicianId: technicianB }, token);
     const body = await response.text();
