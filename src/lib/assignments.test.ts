@@ -234,3 +234,141 @@ test("FIX-21 AC8: reassignment stores the expected arrival from this save", asyn
   expect(current[0]?.technicianId).toBe(technicianB);
   expect(current[0]?.expectedArrivalAt?.toISOString()).toBe(secondArrival.toISOString());
 });
+
+async function sessionToken(staffId: string) {
+  const { createSession } = await import("./session");
+  return createSession(staffId);
+}
+
+async function postAssignment(
+  requestId: string,
+  body: Record<string, unknown>,
+  token: string | null,
+) {
+  const { POST } = await import("../app/api/requests/[id]/assignments/route");
+  const headers = new Headers({ "content-type": "application/json" });
+  if (token) {
+    headers.set("cookie", `fixflow_session=${token}`);
+  }
+  return POST(
+    new Request(`http://localhost/api/requests/${requestId}/assignments`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    }),
+    { params: Promise.resolve({ id: requestId }) },
+  );
+}
+
+async function getTechnicians(token: string | null) {
+  const { GET } = await import("../app/api/technicians/route");
+  const headers = new Headers();
+  if (token) {
+    headers.set("cookie", `fixflow_session=${token}`);
+  }
+  return GET(new Request("http://localhost/api/technicians", { headers }));
+}
+
+test("FIX-21 AC3: a signed-out user or a technician leaves the assignee unchanged", async () => {
+  const technicianA = await createStaff("technician", "Ben Tech");
+  const technicianB = await createStaff("technician", "Cara Tech");
+  const actingTechnician = await createStaff("technician", "Dan Tech");
+  const { requestId, phone, systemKey } = await createRequest();
+  const { getDb } = await import("./db");
+  const assignedAt = new Date("2026-10-13T08:00:00.000Z");
+  const dispatcherId = await createStaff("dispatcher", "Ada Dispatch");
+  await getDb().assignment.create({
+    data: {
+      id: crypto.randomUUID(),
+      requestId,
+      technicianId: technicianA,
+      assignedById: dispatcherId,
+      assignedAt,
+    },
+  });
+
+  const callers = [null, await sessionToken(actingTechnician)];
+  for (const token of callers) {
+    const response = await postAssignment(requestId, { technicianId: technicianB }, token);
+    const body = await response.text();
+    expect(body).not.toContain(phone);
+    expect(body).not.toContain(systemKey);
+    const current = await currentAssignments(requestId);
+    expect(current).toHaveLength(1);
+    expect(current[0]?.technicianId).toBe(technicianA);
+    expect(current[0]?.assignedAt.toISOString()).toBe(assignedAt.toISOString());
+  }
+});
+
+test("FIX-21 AC4: the assignable list is technicians only and has no customer phone or system ID", async () => {
+  const dispatcherId = await createStaff("dispatcher", "Ada Dispatch");
+  const technicianId = await createStaff("technician", "Ben Tech");
+  await createStaff("ops_manager", "Cam Ops");
+  const { phone, systemKey } = await createRequest();
+
+  const response = await getTechnicians(await sessionToken(dispatcherId));
+  expect(response.status).toBe(200);
+  const body = (await response.json()) as { technicians: { id: string; name: string }[] };
+  expect(body.technicians.map((person) => person.id)).toEqual([technicianId]);
+  expect(body.technicians.every((person) => person.name === "Ben Tech")).toBe(true);
+
+  const { getDb } = await import("./db");
+  const roles = await Promise.all(
+    body.technicians.map(async (person) => {
+      const staff = await getDb().staffUser.findUnique({ where: { id: person.id } });
+      return staff?.role;
+    }),
+  );
+  expect(roles).toEqual(["technician"]);
+  const text = JSON.stringify(body);
+  expect(text).not.toContain(phone);
+  expect(text).not.toContain(systemKey);
+  expect(text).not.toContain("Ada Dispatch");
+  expect(text).not.toContain("Cam Ops");
+});
+
+test("FIX-21 AC5: assigning a dispatcher or an ops manager leaves the assignee unchanged", async () => {
+  const dispatcherId = await createStaff("dispatcher", "Ada Dispatch");
+  const otherDispatcher = await createStaff("dispatcher", "Eve Dispatch");
+  const opsId = await createStaff("ops_manager", "Cam Ops");
+  const technicianId = await createStaff("technician", "Ben Tech");
+  const { requestId } = await createRequest();
+  const assignedAt = new Date("2026-10-13T08:00:00.000Z");
+  const { getDb } = await import("./db");
+  await getDb().assignment.create({
+    data: {
+      id: crypto.randomUUID(),
+      requestId,
+      technicianId,
+      assignedById: dispatcherId,
+      assignedAt,
+    },
+  });
+
+  const token = await sessionToken(dispatcherId);
+  for (const staffId of [otherDispatcher, opsId]) {
+    const response = await postAssignment(requestId, { technicianId: staffId }, token);
+    expect(response.status).toBe(200);
+    const current = await currentAssignments(requestId);
+    expect(current).toHaveLength(1);
+    expect(current[0]?.technicianId).toBe(technicianId);
+    expect(current[0]?.assignedAt.toISOString()).toBe(assignedAt.toISOString());
+  }
+});
+
+test("FIX-21 AC9: twelve technicians are the whole assignable list", async () => {
+  const dispatcherId = await createStaff("dispatcher", "Ada Dispatch");
+  await createStaff("ops_manager", "Cam Ops");
+  const names = Array.from({ length: 12 }, (_, index) => `Tech ${String(index + 1).padStart(2, "0")}`);
+  const ids: string[] = [];
+  for (const name of names) {
+    ids.push(await createStaff("technician", name));
+  }
+
+  const response = await getTechnicians(await sessionToken(dispatcherId));
+  expect(response.status).toBe(200);
+  const body = (await response.json()) as { technicians: { id: string; name: string }[] };
+  expect(body.technicians.map((person) => person.name)).toEqual(names);
+  expect(body.technicians.map((person) => person.id)).toEqual(ids);
+  expect(body.technicians).toHaveLength(12);
+});

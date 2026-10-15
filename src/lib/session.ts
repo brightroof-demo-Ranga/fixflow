@@ -30,6 +30,29 @@ export async function createSession(staffUserId: string) {
   return token;
 }
 
+export function sessionTokenFromHeader(header: string | null) {
+  if (!header) {
+    return null;
+  }
+  for (const part of header.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator === -1) {
+      continue;
+    }
+    const key = part.slice(0, separator).trim();
+    if (key !== SESSION_COOKIE) {
+      continue;
+    }
+    const value = decodeURIComponent(part.slice(separator + 1).trim());
+    return value === "" ? null : value;
+  }
+  return null;
+}
+
+export async function staffFromRequest(request: Request) {
+  return getStaffBySession(sessionTokenFromHeader(request.headers.get("cookie")));
+}
+
 export async function getStaffBySession(token: string | null) {
   if (!token) {
     return null;
