@@ -8,12 +8,14 @@ datasource db {
 }
 
 model StaffUser {
-  id           String    @id
-  name         String
-  email        String    @unique
-  passwordHash String
-  role         String
-  sessions     Session[]
+  id                    String       @id
+  name                  String
+  email                 String       @unique
+  passwordHash          String
+  role                  String
+  sessions              Session[]
+  technicianAssignments Assignment[] @relation("AssignmentTechnician")
+  dispatchedAssignments Assignment[] @relation("AssignmentDispatcher")
 }
 
 model Session {
@@ -55,6 +57,20 @@ model ServiceRequest {
   cancelledAt                DateTime?
   createTimestampResult      String?
   originalContactResult      String?
-  customer                   Customer  @relation(fields: [customerId], references: [id])
-  system                     System    @relation(fields: [systemId], references: [systemId])
+  customer                   Customer     @relation(fields: [customerId], references: [id])
+  system                     System       @relation(fields: [systemId], references: [systemId])
+  assignments                Assignment[]
+}
+
+model Assignment {
+  id                String         @id
+  requestId         String
+  technicianId      String
+  assignedById      String
+  assignedAt        DateTime
+  expectedArrivalAt DateTime?
+  supersededAt      DateTime?
+  request           ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  technician        StaffUser      @relation("AssignmentTechnician", fields: [technicianId], references: [id])
+  assignedBy        StaffUser      @relation("AssignmentDispatcher", fields: [assignedById], references: [id])
 }
