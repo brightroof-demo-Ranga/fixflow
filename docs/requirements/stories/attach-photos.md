@@ -48,10 +48,3 @@ Then technician B is not shown that photo
 Given I am the assigned technician and the browser cannot reach the server  
 When I attach an image and submit an update  
 Then that image is not stored on the request
-
-## Open questions
-
-- Is a photo required for critical faults?
-- Max number of photos, max file size, and allowed types were not specified. AC1 and AC2 assume one file the product accepts as an image.
-- May dispatchers attach photos when logging on behalf?
-- May the customer see photos on the tracking link?

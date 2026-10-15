@@ -3,8 +3,8 @@ jira: FIX-23
 epic: Field updates
 epic_key: FIX-12
 status: draft
-version: 3
-last_synced: 2026-10-12
+version: 4
+last_synced: 2026-10-15
 ---
 
 # Technician update job
@@ -73,9 +73,8 @@ Given I am technician A and a dispatcher has reassigned a request from me to tec
 When I open my jobs while signed in as technician A, with the viewport 390 CSS pixels wide  
 Then that request id is not listed
 
-## Open questions
+### AC11
 
-- Full status list besides On site, Remote diagnosis completed, completed, and cancelled was not decided.
-- May I add a free-text note on every update?
-- AC6 and AC7 are a working rule: a failed offline submit is not stored, and there is no offline queue that syncs later. The customer has not confirmed online-only versus offline capture (PRD open question 12). A later manual submit must not backdate the SLA clock.
-- AC9 is how the assigned technician sees the job. A phone call or SMS to the technician was not requested.
+Given I am signed in as the assigned technician, the device can reach the server, and the status is On site or Remote diagnosis completed  
+When I save status completed and the save succeeds  
+Then the request stores status completed and a completed timestamp equal to the server time of that successful save

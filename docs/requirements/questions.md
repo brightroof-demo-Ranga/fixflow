@@ -2,7 +2,7 @@
 
 Source: `docs/intake/2026-10-09-brightroof-request.md` (Nirosha Perera, Head of Operations).
 
-Workshop answers are in `docs/intake/2026-10-14-workshop-notes.md`. Phase 2 requirements live under `docs/requirements/` (PRD, epics, stories, traceability). Remaining items without a workshop answer stay in each story’s Open questions and in the PRD.
+Workshop answers are in `docs/intake/2026-10-14-workshop-notes.md`. Phase 2 requirements live under `docs/requirements/` (PRD, epics, stories, traceability). Items with no acceptance criterion are out of scope for MVP; see the out-of-scope list in `PRD.md`.
 
 For each question: **why it matters** and a **suggested default** if they have no strong preference. Defaults are not decisions.
 

@@ -50,7 +50,7 @@ flowchart TB
 | Background job for SLA checks | Calls the SLA clock evaluator on a timer so a critical request can become breached after 24 hours with no staff action. |
 | SLA clock evaluator | Pure rules in section 6. The API calls it when a relevant field is saved. The job calls it for requests whose window can expire with no further save. |
 
-Staff sign-in creates a server session. The session id is an unguessable random value in an httpOnly cookie. The database stores only a hash of that id, the staff user, and an expiry. Sign-out deletes the session. The sign-in factor itself is still an open question ([staff-sign-in](../requirements/stories/staff-sign-in.md)). A password checked against the staff row uses no identity provider. Single sign-on is a third-party choice and is not selected.
+Staff sign-in creates a server session. The session id is an unguessable random value in an httpOnly cookie. The database stores only a hash of that id, the staff user, and an expiry. Sign-out deletes the session. The sign-in check is the staff user's email and password against the staff row, with no identity provider ([staff-sign-in](../requirements/stories/staff-sign-in.md)). Single sign-on is not selected. Password length, lockout, and creating the first ops manager account are out of scope for MVP.
 
 The web app and the API share one injectable clock. Tests set it to a Saturday, a weekday, 30 November 2026, 1 December 2026, or a moment past 86400 seconds. Saved timestamps use that clock at the successful save.
 
@@ -91,6 +91,8 @@ erDiagram
   StaffUser {
     string id PK
     string name
+    string email UK
+    string passwordHash
     string role "dispatcher, technician, or ops_manager"
   }
 
@@ -180,7 +182,7 @@ Each save inserts an `Assignment`. The previous current row, if any, gets `super
 
 `expectedArrivalAt` is set only when the dispatcher sends one. Reassignment stores the arrival time from that save, including clearing it when this save omits one.
 
-The weekly workload count uses this current row only. A job counts for a technician in a Monday–Sunday week when that technician is the current assignee and `assignedAt` falls in the week in the report timezone. The previous assignee’s count does not include it. The report timezone is configuration. BrightRoof has not named the zone.
+The weekly workload count uses this current row only. A job counts for a technician in a Monday–Sunday week when that technician is the current assignee and `assignedAt` falls in the week in the report timezone. The previous assignee’s count does not include it. The report timezone is configuration. Naming the zone is out of scope.
 
 ### Status projection
 
@@ -206,7 +208,7 @@ The `Photo` row holds metadata. The bytes live under `storageKey` in file storag
 
 Staff creates, assignments, technician updates, and dispatcher cancellations append an `AuditLog` row in the same transaction as the change. A customer self-log has no audit actor in the stories, so this design writes no audit row for it until that question is answered.
 
-Each required SMS inserts one `Notification` in the same transaction as the save. Kinds: `tracking_link`, `assigned`, `on_site`, `remote_diagnosis`. The adapter runs after the transaction commits. A provider rejection does not roll back the request. What the product does when a provider rejects a number is still open.
+Each required SMS inserts one `Notification` in the same transaction as the save. Kinds: `tracking_link`, `assigned`, `on_site`, `remote_diagnosis`. The adapter runs after the transaction commits. A provider rejection does not roll back the request. What the product does after that rejection is out of scope.
 
 ### Reports that read this model
 
@@ -234,23 +236,20 @@ stateDiagram-v2
   OnSite --> RemoteDiagnosisCompleted: Assigned technician saves Remote diagnosis completed
   RemoteDiagnosisCompleted --> OnSite: Assigned technician saves On site
 
+  OnSite --> Completed: Assigned technician saves completed
+  RemoteDiagnosisCompleted --> Completed: Assigned technician saves completed
+
   NotAssigned --> Cancelled: Dispatcher cancels
   Assigned --> Cancelled: Dispatcher cancels
   OnSite --> Cancelled: Dispatcher cancels
   RemoteDiagnosisCompleted --> Cancelled: Dispatcher cancels
-
-  Completed: Reports read this state
-  note right of Completed
-    No story names who may set completed.
-    No arrow is allowed until that is decided.
-  end note
 ```
 
 Reassignment changes the current assignee and `assignedAt`. It leaves status, `onSiteAt`, and `remoteDiagnosisCompletedAt` as they were. Both response statuses remain reachable from each other so the later save can become the status the tracking page shows, while the earlier timestamp still exists for the SLA rule.
 
-`Cancelled` has no outgoing transition. Reopening is an open question, so it is not allowed here.
+`Cancelled` has no outgoing transition. Reopening is out of scope, so it is not allowed here.
 
-`Completed` is a real status: open jobs exclude it, and average time to resolve reads `completedAt`. No acceptance criterion names the role that may enter it, so the diagram has no transition into it.
+`Completed` is a real status: open jobs exclude it, and average time to resolve reads `completedAt`. The assigned technician enters it from On site or Remote diagnosis completed ([technician-update-job](../requirements/stories/technician-update-job.md) AC11). No other role can.
 
 ### Allowed transitions
 
@@ -261,6 +260,7 @@ Reassignment changes the current assignee and `assignedAt`. It leaves status, `o
 | Assigned, On site, or Remote diagnosis completed | Same status | Signed-in dispatcher, to a different technician | New current assignment. Previous assignee kept on the closed assignment row. |
 | Assigned, On site, or Remote diagnosis completed | On site | Signed-in technician who is the current assignee, and the server received the save | `onSiteAt` = server time of this save. Status follows the projection above. |
 | Assigned, On site, or Remote diagnosis completed | Remote diagnosis completed | Same assigned technician, server received the save | `remoteDiagnosisCompletedAt` = server time of this save. |
+| On site or Remote diagnosis completed | Completed | Signed-in technician who is the current assignee, and the server received the save | `completedAt` = server time of this save. |
 | Not assigned, Assigned, On site, or Remote diagnosis completed | Cancelled | Signed-in dispatcher, and the request is not already completed or cancelled | `cancelledAt` = server time of this save. |
 
 A failed submit while the technician’s browser cannot reach the server writes no timestamp and no photo. The next successful submit uses the later server time.
@@ -277,9 +277,10 @@ The stored request stays as it was.
 | Assign or reassign while cancelled | Assignee unchanged, status stays cancelled. |
 | Technician updates a job assigned to someone else, including after it was reassigned away from them | Update not saved, assignee unchanged. |
 | Assigned technician updates a cancelled request | Update not saved, status stays cancelled ([cancel-request](../requirements/stories/cancel-request.md) AC2). |
+| Anyone other than the assigned technician saves completed | Update not saved, status unchanged. |
 | Signed-out user or a technician creates an on-behalf request | No request stored. |
 
-Ops manager assign, on-behalf create, cancel, and remote-diagnosis save are not in the allowed table. The stories do not grant them. The PRD assumption that only dispatchers assign is consistent with that, and it is still an assumption.
+Ops manager assign, on-behalf create, and cancel are out of MVP. The stories do not grant them, so they stay refused.
 
 Marking `critical` is not a status transition. A signed-in dispatcher may set it on create or on a later edit.
 
@@ -293,7 +294,7 @@ Pages that carry those actions: `/sign-in`, `/requests/new`, `/track/{token}`, `
 
 | Method | Path | Role | Story / AC |
 | --- | --- | --- | --- |
-| POST | `/api/session` | Public. Matching staff credentials only. | [staff-sign-in](../requirements/stories/staff-sign-in.md) AC1, AC4 |
+| POST | `/api/session` | Public. Matching staff email and password only. | [staff-sign-in](../requirements/stories/staff-sign-in.md) AC1, AC4 |
 | DELETE | `/api/session` | Signed-in staff | [staff-sign-in](../requirements/stories/staff-sign-in.md) AC3. After this, staff screens show sign-in and no request data (AC2, AC3). |
 | GET | `/api/staff/{staffId}` | Ops manager | [roles-and-permissions](../requirements/stories/roles-and-permissions.md) AC1 |
 | POST | `/api/requests` | Customer, no account. Body: phone, system id, description. Optional one image. | [customer-log-request](../requirements/stories/customer-log-request.md) AC1–AC12. [attach-photos](../requirements/stories/attach-photos.md) AC1, AC3. [customer-tracking-link](../requirements/stories/customer-tracking-link.md) AC1. [sms-notify-customer](../requirements/stories/sms-notify-customer.md) AC1, AC4, AC6. |
@@ -304,7 +305,7 @@ Pages that carry those actions: `/sign-in`, `/requests/new`, `/track/{token}`, `
 | POST | `/api/requests/{id}/assignments` | Dispatcher. Body: technician id. Optional `expectedArrivalAt`. | [dispatcher-assign-technician](../requirements/stories/dispatcher-assign-technician.md) AC1–AC3, AC5–AC8. [dispatcher-log-on-behalf](../requirements/stories/dispatcher-log-on-behalf.md) AC2 (assign succeeds). [roles-and-permissions](../requirements/stories/roles-and-permissions.md) AC2, AC4, AC5. [audit-log](../requirements/stories/audit-log.md) AC2, AC5. [sms-notify-customer](../requirements/stories/sms-notify-customer.md) AC2, AC5, AC7, AC8. [customer-tracking-link](../requirements/stories/customer-tracking-link.md) AC2, AC6, AC9, AC10. |
 | POST | `/api/requests/{id}/cancellation` | Dispatcher, and status is neither completed nor cancelled | [cancel-request](../requirements/stories/cancel-request.md) AC1, AC4, AC5. [audit-log](../requirements/stories/audit-log.md) AC6. The same transaction runs the SLA evaluator ([sla-24h-response](../requirements/stories/sla-24h-response.md) AC6). |
 | GET | `/api/technician/jobs` | Technician | [technician-update-job](../requirements/stories/technician-update-job.md) AC9, AC10. Only that technician’s current assignments. |
-| POST | `/api/requests/{id}/status` | Current assignee. Body: `on_site` or `remote_diagnosis_completed`. Optional one image. | [technician-update-job](../requirements/stories/technician-update-job.md) AC1–AC8. [cancel-request](../requirements/stories/cancel-request.md) AC2. [dispatcher-log-on-behalf](../requirements/stories/dispatcher-log-on-behalf.md) AC2 (technician update succeeds). [attach-photos](../requirements/stories/attach-photos.md) AC2, AC3, AC6. [audit-log](../requirements/stories/audit-log.md) AC3. [sms-notify-customer](../requirements/stories/sms-notify-customer.md) AC3. [customer-tracking-link](../requirements/stories/customer-tracking-link.md) AC7. The same transaction runs the SLA evaluator ([sla-24h-response](../requirements/stories/sla-24h-response.md) AC1, AC5, AC7, AC11). |
+| POST | `/api/requests/{id}/status` | Current assignee. Body: `on_site`, `remote_diagnosis_completed`, or `completed`. Optional one image. | [technician-update-job](../requirements/stories/technician-update-job.md) AC1–AC8, AC11. [cancel-request](../requirements/stories/cancel-request.md) AC2. [dispatcher-log-on-behalf](../requirements/stories/dispatcher-log-on-behalf.md) AC2 (technician update succeeds). [attach-photos](../requirements/stories/attach-photos.md) AC2, AC3, AC6. [audit-log](../requirements/stories/audit-log.md) AC3. [sms-notify-customer](../requirements/stories/sms-notify-customer.md) AC3. [customer-tracking-link](../requirements/stories/customer-tracking-link.md) AC7. The same transaction runs the SLA evaluator ([sla-24h-response](../requirements/stories/sla-24h-response.md) AC1, AC5, AC7, AC11). |
 | GET | `/api/requests/{id}/photos/{photoId}` | Dispatcher, ops manager, or the assigned technician | [attach-photos](../requirements/stories/attach-photos.md) AC1, AC2, AC4, AC5. |
 | GET | `/api/track/{token}` | No session. Valid token only. | [customer-tracking-link](../requirements/stories/customer-tracking-link.md) AC1–AC10. [roles-and-permissions](../requirements/stories/roles-and-permissions.md) AC3. Response fields: request id, status, assignee name when assigned, expected arrival to the second or the text `no arrival time`. |
 | GET | `/api/requests/{id}/audit` | Ops manager | [audit-log](../requirements/stories/audit-log.md) AC4, and the entries from AC1–AC3, AC5, AC6. |
@@ -339,8 +340,8 @@ Yes means a story requires the action to succeed. No means a story requires it t
 | List technicians who can be assigned | No | Yes | No | Unset |
 | Assign or reassign a technician | No | Yes | No | Unset |
 | Cancel a request that is not completed | No | Yes | No | Unset |
-| Save On site or Remote diagnosis completed | No | Unset | Yes, current assignee only | Unset |
-| Save Completed | Unset | Unset | Unset | Unset |
+| Save On site or Remote diagnosis completed | No | No | Yes, current assignee only | No |
+| Save Completed | No | No | Yes, current assignee, from On site or Remote diagnosis completed | No |
 | Mark critical | Unset | Yes | No | Unset |
 | Attach a photo on public create | Yes, optional | Unset on on-behalf create | No | Unset |
 | Attach a photo on a job update | No | Unset | Yes, current assignee, and the server is reachable | Unset |
@@ -437,20 +438,6 @@ These are required by the product or by production hosting, and none is chosen:
 | Photo bytes | Directory on the app server, keyed from the `Photo` row. | A durable store if the host disk does not survive redeploy. Object storage is a paid service and is not selected. |
 | Production database | Postgres, as [AGENTS.md](../../AGENTS.md) requires. SQLite remains the development database. | The Postgres host. |
 | SLA schedule | In-process timer calling the evaluator. | A hosted scheduler only if the app server does not stay running. That host may be a paid service. |
-| Staff identity | Session cookie against a staff row in the database. | The factor: password, magic link, or SSO. SSO is a paid or third-party choice and is not selected. Magic link would need an email sender, and email is outside the MVP. |
+| Staff identity | Session cookie against a staff row. Sign-in checks that row's email and password. | None. SSO is not selected. Password length, lockout, and first-account provisioning are out of scope for MVP. |
 
 ---
-
-## Open behavior this design does not invent
-
-- Who may set `completed`, and from which statuses.
-- Whether an ops manager may assign, log on behalf, cancel, or open the dispatcher lists and the reports.
-- Whether a dispatcher may save On site or Remote diagnosis completed. The PRD assumption says a dispatcher might record remote diagnosis. No acceptance criterion allows it.
-- Whether the customer may mark critical, and whether keyword text auto-flags it. Dispatcher save is the path that stores `critical`.
-- Whether a cancelled critical request that already has a response timestamp is met, breached, or neither.
-- Which result the warranty contract uses when create-timestamp and original-contact disagree.
-- Display timezone, report timezone, retention of requests, photos, and audit rows.
-- Photo count, file size, allowed types, dispatcher attach on behalf, and photos on the tracking page.
-- Whether customer self-log writes an audit row, who besides the ops manager may read audit, and sort order.
-- Cancellation SMS, reopen, and a required cancellation note.
-- Password policy, lockout, and who creates the first ops manager.

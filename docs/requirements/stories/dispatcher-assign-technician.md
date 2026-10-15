@@ -66,11 +66,3 @@ Then the request stores the expected arrival timestamp from this save
 Given I am signed in as a dispatcher and exactly 12 staff users have the technician role  
 When I open the list of people I can assign  
 Then the list contains those 12 users and no one else
-
-## Open questions
-
-- May ops managers assign or reassign? AC3 does not deny that role.
-- Can a technician pick an unassigned job? AC3 says a technician assign does not change the assignee.
-- How do I see who is already overloaded before I assign (report story covers weekly counts, not live capacity)?
-- Pilot headcount (3 technicians on 1 December 2026, then 12) is operational. AC4 does not cap the list at 3. AC9 requires all 12 when exactly 12 staff users have the technician role. It does not cap a larger roster.
-- AC1 still allows an assignment with no expected arrival timestamp. AC7 and AC8 store one when the dispatcher saves it. Whether assign is blocked without one was not decided. When none is stored, customer-tracking-link AC10 and sms-notify-customer AC8 show "no arrival time". Display timezone for that timestamp is unspecified.

@@ -72,11 +72,3 @@ Then the page shows that expected arrival timestamp, to the second
 Given I am signed out and I open a valid tracking link  
 When the request has an assignee, has no expected arrival timestamp, and has neither an on-site timestamp nor a remote-diagnosis-completed timestamp  
 Then the page shows status Assigned, the current assignee’s name, the request id, and the text "no arrival time"
-
-## Open questions
-
-- AC9 shows the expected arrival timestamp when a dispatcher stored one (dispatcher-assign AC7 and AC8). AC10 shows the text "no arrival time" when the assignee is set and that timestamp is absent. Photos on this page are still unspecified.
-- Display timezone for the expected arrival timestamp is unspecified. AC9 passes when the visible value is that stored instant, to the second.
-- How the link is issued (on-screen after submit, SMS, or both) overlaps the SMS story.
-- AC3 requires a link that is not valid when only the request id changes. Token format was not specified.
-- The customer cannot cancel from this page in these ACs. Who may cancel is the cancel-request story; customer self-serve cancel was not decided.

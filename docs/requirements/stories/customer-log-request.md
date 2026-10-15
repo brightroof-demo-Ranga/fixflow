@@ -84,13 +84,3 @@ Then the request is stored with a unique request id and a create timestamp, and 
 Given a phone number, a system ID, and a problem description  
 When I submit while the application clock is a Monday, Tuesday, Wednesday, Thursday, or Friday  
 Then the request is stored with a unique request id and a create timestamp, and the response is not a rejection for being outside office hours
-
-## Open questions
-
-- AC9 stores a submit that omits name, site address, email, and photo, so those fields are not required. Whether the form still shows name and site address was not confirmed.
-- How is system ID validated against the ~2,000 systems? AC6 stores a new request when 2000 distinct system IDs already exist. It does not check the new id against a registry.
-- AC7 uses 1 December 2026, the workshop pilot date, so a submit on that date is not rejected. AC10 uses 30 November 2026 so a submit on the day before December is not rejected. The email did not name either civil date. Timezone for those dates is still open, as for AC4 and AC12.
-- AC8 checks that a valid customer submit is stored with no Google Sheet and no WhatsApp API. AC11 also stores that submit when email delivery is unavailable, and no email is sent. No budget amount was stated.
-- Critical vs standard at submit time vs dispatcher review (see classify-critical-fault).
-- AC4 covers Saturday and Sunday. AC12 covers Monday through Friday. Neither AC names a timezone.
-- AC5 keeps both requests so a second submit is not dropped. Whether the form should warn or block a matching open request was not decided.

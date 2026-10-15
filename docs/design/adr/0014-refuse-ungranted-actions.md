@@ -10,4 +10,4 @@ A refused call writes nothing and returns none of the data the acceptance criter
 
 ## Why it matters
 
-Several permission cells are still open. Allowing them would give assign, cancel, or the full job list to a role the workshop has not confirmed.
+Those permission cells are out of MVP. They stay refused because no story grants them.

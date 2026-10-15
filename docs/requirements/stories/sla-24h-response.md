@@ -85,10 +85,3 @@ Then no original-contact result is recorded
 Given a critical request that is not cancelled and that stores an original contact timestamp  
 When the earlier of the on-site timestamp and the remote-diagnosis-completed timestamp is more than 86400 seconds after the original contact timestamp  
 Then the request records original-contact result breached, and the SLA met or SLA breached value defined from the create timestamp is unchanged
-
-## Open questions
-
-- AC1, AC2, AC5, and AC6 record SLA met or breached from the create timestamp. AC7, AC8, and AC11 record a separate original-contact result and leave that create-timestamp value unchanged. Warranty owners have not said which result the contract uses.
-- Timezone for displaying the deadline? Elapsed seconds in AC1, AC2, AC5, and AC6 do not depend on a calendar date.
-- Who may record remote diagnosis completed (technician only, or dispatcher too)?
-- AC6 treats a cancelled critical request with no response as neither met nor breached. Confirm with warranty owners before relying on it.

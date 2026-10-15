@@ -48,10 +48,3 @@ Then an audit entry records the request id, the dispatcher’s staff identity, t
 Given a signed-in dispatcher cancels a request  
 When the cancellation is saved  
 Then an audit entry records the request id, the dispatcher’s staff identity, the action “cancelled”, and a timestamp
-
-## Open questions
-
-- Does a customer self-log create an audit row with actor “customer” (phone + system ID) rather than a staff user?
-- How long are audit records kept?
-- Can dispatchers and technicians read the audit log, or only ops managers?
-- AC4 does not require a sort direction. Oldest-first versus newest-first was not specified.

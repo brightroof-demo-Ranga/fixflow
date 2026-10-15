@@ -72,12 +72,3 @@ Then the request stores that original contact timestamp and a create timestamp a
 Given I am signed in as a dispatcher  
 When I submit an on-behalf request with a phone number, a system ID, a problem description, and a source of WhatsApp or phone, and I omit an original contact timestamp  
 Then the request is stored with a unique request id and a create timestamp, and no original contact timestamp is stored
-
-## Open questions
-
-- Is source (WhatsApp / phone / customer form) a required field? AC4 checks the value when it is provided.
-- AC9 stores an original contact timestamp when the dispatcher submits one. AC10 stores the request when it is omitted. Which clock the warranty uses is the SLA story.
-- May an ops manager create an on-behalf request? AC3 does not deny that role.
-- AC5 stores a second request rather than merging. Warn-or-block was not decided.
-- AC6 covers Saturday and Sunday. AC7 covers Monday through Friday. Neither AC names a timezone.
-- AC8 stores a dispatcher submit with no WhatsApp API and no hotline API. Automatic capture of those channels is not a behavior of this story.

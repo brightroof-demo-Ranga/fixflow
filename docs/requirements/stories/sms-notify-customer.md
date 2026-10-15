@@ -11,7 +11,7 @@ last_synced: 2026-10-12
 
 As a customer, I want SMS updates, so that I do not have to call the hotline.
 
-An outbound SMS is testable as a recorded send to a destination number with a body. Provider delivery receipts stay an open question.
+An outbound SMS is testable as a recorded send to a destination number with a body. Provider delivery receipts are out of scope.
 
 ## Acceptance criteria
 
@@ -62,11 +62,3 @@ Then one outbound SMS is recorded to the customer phone number, and the body con
 Given a request has no assignee  
 When a dispatcher assigns a technician, does not save an expected arrival timestamp, and the assignment is saved  
 Then one outbound SMS is recorded to the customer phone number, and the body contains "assigned" and "no arrival time"
-
-## Open questions
-
-- SMS provider, sender id, and what happens when the provider rejects a number were not specified. These ACs check that FixFlow recorded the send.
-- Exact SMS copy was not specified beyond the facts named in AC1–AC3, AC5, AC7, and AC8. Display timezone for the expected arrival timestamp in AC7 is unspecified. AC7 passes when the body contains that stored instant, to the second. AC8 passes when the body contains "no arrival time".
-- Should the assignment SMS name the technician?
-- Should cancellation send an SMS? Not in these ACs.
-- Email remains optional. AC4 passes with no email address on the request; it does not forbid a later email channel.
