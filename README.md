@@ -8,6 +8,12 @@ A matching sign-in sets an httpOnly cookie named `fixflow_session`. The cookie v
 
 After sign-in, a dispatcher opens `/dispatch`, a technician opens `/technician/jobs`, and an ops manager opens `/ops/open-jobs`. Those screens show the sign-in form, and no request data, when there is no session.
 
+## Customer log request
+
+A customer with no account logs a problem at `/requests/new`. The required fields are phone number, system ID, and problem description. Name, site address, email, and photo may be absent. `POST /api/requests` stores the request with source `customer_form`, a new request id, and a create timestamp. The confirmation shows that request id.
+
+The route does not call a Google Sheet, a WhatsApp API, or email. It does not reject weekends, weekdays, 30 November 2026, or 1 December 2026. A second open request for the same phone and system ID is stored as a new row. A system ID that is not already stored is accepted.
+
 Local development uses SQLite at `prisma/dev.db`. `npm test` generates the Prisma client and runs the unit tests.
 
 ## Getting Started
