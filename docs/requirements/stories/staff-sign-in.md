@@ -2,7 +2,7 @@
 jira: FIX-16
 epic: Platform
 epic_key: FIX-9
-status: draft
+status: in-progress
 version: 3
 last_synced: 2026-10-15
 ---
@@ -36,3 +36,9 @@ Then I am shown the sign-in screen and the response includes no request data
 Given I submit an email and password that do not match a staff user  
 When I submit the sign-in form  
 Then I have no signed-in session and the response includes no request data
+
+## Behavior
+
+Staff sign in with email and password on `/sign-in`. There is no identity provider. A matching sign-in sets an httpOnly cookie named `fixflow_session` to a random session id that expires after 12 hours. The database stores only a hash of that id, the staff user, and the expiry. Sign-out deletes the session row and clears the cookie.
+
+A dispatcher opens `/dispatch` (Assign jobs). A technician opens `/technician/jobs` (Update jobs). An ops manager opens `/ops/open-jobs` (Open jobs). With no session, or after sign-out, the assign and update screens show the sign-in screen and include no request data. Single sign-on is not selected. Password length, lockout, and creating the first ops manager account are out of scope.
