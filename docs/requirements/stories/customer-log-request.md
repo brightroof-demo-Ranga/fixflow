@@ -2,7 +2,7 @@
 jira: FIX-19
 epic: Capture service requests
 epic_key: FIX-10
-status: draft
+status: in-progress
 version: 4
 last_synced: 2026-10-12
 ---
@@ -84,3 +84,13 @@ Then the request is stored with a unique request id and a create timestamp, and 
 Given a phone number, a system ID, and a problem description  
 When I submit while the application clock is a Monday, Tuesday, Wednesday, Thursday, or Friday  
 Then the request is stored with a unique request id and a create timestamp, and the response is not a rejection for being outside office hours
+
+## Behavior
+
+A customer with no account logs a problem at `/requests/new`. The form submits phone, system ID, and description to `POST /api/requests`. There is no session.
+
+A valid submit stores a `ServiceRequest` with source `customer_form`, a new request id, and `createdAt` from the application clock. The confirmation shows that request id. The create response also returns a tracking token once; the database stores only its SHA-256 hash.
+
+Phone and system ID are required. An empty phone number or system ID stores nothing, issues no request id, and the screen names each missing field. Name, site address, email, and photo may be absent. A second open request for the same phone and system ID is a new row, and the first row stays as it was. A system ID that is not already stored is accepted.
+
+The route does not call a Google Sheet, a WhatsApp API, or email. It does not reject a weekend, a weekday, 30 November 2026, or 1 December 2026.
