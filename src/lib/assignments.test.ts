@@ -2,7 +2,15 @@ import { execSync } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: () => {},
+    refresh: () => {},
+  }),
+}));
 
 const root = process.cwd();
 
@@ -298,13 +306,25 @@ test("FIX-21 AC3: a signed-out user or a technician leaves the assignee unchange
     expect(current[0]?.technicianId).toBe(technicianA);
     expect(current[0]?.assignedAt.toISOString()).toBe(assignedAt.toISOString());
   }
+
+  const signedOut = await assignHtml(requestId, null);
+  expect(signedOut).toContain(">Sign in<");
+  expect(signedOut).not.toContain(phone);
+  expect(signedOut).not.toContain(systemKey);
+  expect(signedOut).not.toContain("Assign technician");
+
+  const technicianScreen = await assignHtml(requestId, await sessionToken(actingTechnician));
+  expect(technicianScreen).toContain("Not available");
+  expect(technicianScreen).not.toContain(phone);
+  expect(technicianScreen).not.toContain(systemKey);
+  expect(technicianScreen).not.toContain("<option");
 });
 
 test("FIX-21 AC4: the assignable list is technicians only and has no customer phone or system ID", async () => {
   const dispatcherId = await createStaff("dispatcher", "Ada Dispatch");
   const technicianId = await createStaff("technician", "Ben Tech");
   await createStaff("ops_manager", "Cam Ops");
-  const { phone, systemKey } = await createRequest();
+  const { requestId, phone, systemKey } = await createRequest();
 
   const response = await getTechnicians(await sessionToken(dispatcherId));
   expect(response.status).toBe(200);
@@ -325,6 +345,14 @@ test("FIX-21 AC4: the assignable list is technicians only and has no customer ph
   expect(text).not.toContain(systemKey);
   expect(text).not.toContain("Ada Dispatch");
   expect(text).not.toContain("Cam Ops");
+
+  const html = await assignHtml(requestId, await sessionToken(dispatcherId));
+  expect(html).toContain("Ben Tech");
+  expect(html).toContain("<option");
+  expect(html).not.toContain(phone);
+  expect(html).not.toContain(systemKey);
+  expect(html).not.toContain("Ada Dispatch");
+  expect(html).not.toContain("Cam Ops");
 });
 
 test("FIX-21 AC5: assigning a dispatcher or an ops manager leaves the assignee unchanged", async () => {
@@ -354,6 +382,11 @@ test("FIX-21 AC5: assigning a dispatcher or an ops manager leaves the assignee u
     expect(current[0]?.technicianId).toBe(technicianId);
     expect(current[0]?.assignedAt.toISOString()).toBe(assignedAt.toISOString());
   }
+
+  const html = await assignHtml(requestId, token);
+  expect(html).toContain("Ben Tech");
+  expect(html).not.toContain("Eve Dispatch");
+  expect(html).not.toContain("Cam Ops");
 });
 
 test("FIX-21 AC9: twelve technicians are the whole assignable list", async () => {
@@ -371,4 +404,18 @@ test("FIX-21 AC9: twelve technicians are the whole assignable list", async () =>
   expect(body.technicians.map((person) => person.name)).toEqual(names);
   expect(body.technicians.map((person) => person.id)).toEqual(ids);
   expect(body.technicians).toHaveLength(12);
+
+  const { requestId } = await createRequest();
+  const html = await assignHtml(requestId, await sessionToken(dispatcherId));
+  expect(html.match(/<option /g)).toHaveLength(12);
+  for (const name of names) {
+    expect(html).toContain(name);
+  }
+  expect(html).not.toContain("Ada Dispatch");
+  expect(html).not.toContain("Cam Ops");
 });
+
+async function assignHtml(requestId: string, token: string | null) {
+  const { renderAssignScreen } = await import("./assign-screen");
+  return renderToStaticMarkup(await renderAssignScreen(requestId, token));
+}
