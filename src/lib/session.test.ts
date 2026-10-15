@@ -21,12 +21,12 @@ beforeAll(async () => {
   databaseDir = await mkdtemp(path.join(tmpdir(), "fixflow-"));
   const databaseFile = path.join(databaseDir, "test.db").replaceAll("\\", "/");
   process.env.DATABASE_URL = `file:${databaseFile}`;
-  execSync("npx prisma migrate deploy", {
+  execSync("node ./node_modules/prisma/build/index.js migrate deploy", {
     cwd: root,
     env: process.env,
     stdio: "pipe",
   });
-});
+}, 60_000);
 
 beforeEach(async () => {
   const { getDb, resetDb } = await import("./db");
