@@ -1,5 +1,15 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Staff sign-in
+
+Dispatchers, technicians, and ops managers sign in at `/sign-in` with the email and password stored on their staff row. There is no identity provider, and single sign-on is not selected. Password length, lockout, and creating the first ops manager account are out of scope.
+
+A matching sign-in sets an httpOnly cookie named `fixflow_session`. The cookie value is a random session id. The database stores only a hash of that id, the staff user, and an expiry 12 hours later. Sign-out deletes that session row and clears the cookie.
+
+After sign-in, a dispatcher opens `/dispatch`, a technician opens `/technician/jobs`, and an ops manager opens `/ops/open-jobs`. Those screens show the sign-in form, and no request data, when there is no session.
+
+Local development uses SQLite at `prisma/dev.db`. `npm test` generates the Prisma client and runs the unit tests.
+
 ## Getting Started
 
 First, run the development server:

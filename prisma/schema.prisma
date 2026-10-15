@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model StaffUser {
+  id           String    @id
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         String
+  sessions     Session[]
+}
+
+model Session {
+  id          String    @id
+  tokenHash   String    @unique
+  staffUserId String
+  expiresAt   DateTime
+  staffUser   StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+}
