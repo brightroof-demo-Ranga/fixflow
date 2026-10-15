@@ -23,3 +23,38 @@ model Session {
   expiresAt   DateTime
   staffUser   StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
 }
+
+model Customer {
+  id       String           @id
+  phone    String           @unique
+  name     String?
+  email    String?
+  requests ServiceRequest[]
+}
+
+model System {
+  id       String           @id
+  systemId String           @unique
+  requests ServiceRequest[]
+}
+
+model ServiceRequest {
+  id                         String    @id
+  customerId                 String
+  systemId                   String
+  description                String
+  source                     String
+  critical                   Boolean   @default(false)
+  status                     String
+  createdAt                  DateTime
+  originalContactAt          DateTime?
+  trackingTokenHash          String    @unique
+  onSiteAt                   DateTime?
+  remoteDiagnosisCompletedAt DateTime?
+  completedAt                DateTime?
+  cancelledAt                DateTime?
+  createTimestampResult      String?
+  originalContactResult      String?
+  customer                   Customer  @relation(fields: [customerId], references: [id])
+  system                     System    @relation(fields: [systemId], references: [systemId])
+}
