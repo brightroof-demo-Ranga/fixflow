@@ -44,9 +44,3 @@ Then that request is not listed
 Given an open request was reassigned from technician A to technician B  
 When I open the open-jobs view  
 Then that row shows technician B as the assignee and does not show technician A as the assignee
-
-## Open questions
-
-- Which statuses exist besides completed and cancelled? Those two are enough to exclude a row; the rest of the list was not decided.
-- May dispatchers see this same list? AC3 does not deny dispatchers.
-- Sort and filter (by technician, critical, age) were not specified.

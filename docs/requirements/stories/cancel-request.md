@@ -44,11 +44,3 @@ Then the status is unchanged
 Given the request status is cancelled  
 When a signed-in dispatcher tries to assign a technician  
 Then the assignee is unchanged and the status remains cancelled
-
-## Open questions
-
-- Can the customer cancel from the tracking link with no dispatcher? These ACs do not add that control. The tracking page only shows status Cancelled after a dispatcher cancel.
-- Does cancelling a critical request with no on-site or remote-diagnosis timestamp count as an SLA breach? The SLA story AC6 says no until warranty owners confirm.
-- Can a cancelled request be reopened?
-- May an ops manager cancel?
-- Is a cancellation note required?

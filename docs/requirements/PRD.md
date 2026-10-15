@@ -35,7 +35,7 @@ They asked for something simple: customers log a problem, staff assign it, techn
 | G5 | Technicians can update jobs from a phone. | A signed-in technician can change a job from a phone-sized browser. |
 | G6 | Ops can see workload and SLA. | Screens or reports for: open jobs, SLA breaches, average time to resolve, jobs per technician per week. |
 | G7 | Staff actions are attributable. | Sign-in for dispatcher, technician, and ops manager; audit records of create, assign, and update. |
-| G8 | Dates the customer named. | Pilot 1 December 2026 with 3 technicians; all 12 technicians by mid-January (year after the 1 December 2026 pilot, i.e. January 2027, unless they say otherwise — see Open questions). |
+| G8 | Dates the customer named. | Pilot 1 December 2026 with 3 technicians; all 12 technicians by mid-January 2027. |
 
 ---
 
@@ -53,13 +53,13 @@ They asked for something simple: customers log a problem, staff assign it, techn
 ## In scope (MVP)
 
 - Staff roles: dispatcher, technician, ops manager.
-- Staff sign-in (mechanism not specified by the customer — see Open questions).
+- Staff sign-in with email and password.
 - Audit log of who created, assigned, and updated a request.
 - Customer logs a request without an account (phone + system ID).
 - Dispatcher logs WhatsApp and phone requests on the customer’s behalf.
 - Dispatcher assigns a technician.
 - Technician updates a job from a phone.
-- Photos on a request (customer asked; optional vs required not decided).
+- Photos on a request (optional).
 - Tracking link for the customer.
 - SMS notifications (must).
 - Critical-fault classification using the workshop definition.
@@ -81,6 +81,20 @@ Stated by the customer as later or “for now”:
 Not asked for in intake or workshop, so not in MVP:
 
 - Live Google Sheet sync.
+- Password length, account lockout, and creating the first ops manager account.
+- Customer marking critical, and keyword auto-flag. No stored reason code for zero output versus a safety sign.
+- Photo count, file size, allowed types, a required photo, dispatcher attach on behalf, and photos on the tracking page.
+- A named display timezone. Shown arrival times stay the stored instant, to the second.
+- Customer cancel, reopen, a required cancellation note, and a cancellation SMS.
+- Ops manager assign, reassign, on-behalf create, and cancel.
+- Dispatcher or ops manager saving On site or Remote diagnosis completed.
+- A longer status list than On site, Remote diagnosis completed, completed, and cancelled.
+- Live capacity on the assign screen. Warn-or-block on a matching open request.
+- Dispatcher access to the ops open-jobs list and the SLA/workload reports. Sort and filter on open jobs.
+- An audit row for customer self-log, a retention period, dispatcher or technician read of audit, and an audit sort order.
+- A default report period when none is chosen. Picking which of the two stored SLA results the warranty contract uses.
+- SMS provider, sender id, rejection handling, and delivery receipts. The recorded send stays required. Technician name in the assignment SMS. Phone or SMS to the technician.
+- Who creates or changes staff roles. A specific tracking-token format. Showing the tracking link on screen after submit. The SMS body still contains the link.
 
 ---
 
@@ -114,10 +128,11 @@ Platform, capture, assign, field updates, photos, tracking link, SMS, critical S
 These are not workshop answers. Treat as working assumptions until the customer confirms.
 
 - “Within 24 hours of the request” means 24 hours from the FixFlow create timestamp.
-- “Remote diagnosis completed” is a technician (or dispatcher) action recorded on the request.
+- “Remote diagnosis completed” is recorded by the assigned technician.
 - Only signed-in dispatchers assign work in MVP.
 - Photos are allowed on create and on technician update, not mandatory.
 - Email is after MVP.
+- A technician update that cannot reach the server is not stored and is not queued.
 
 ---
 
@@ -128,23 +143,3 @@ These are not workshop answers. Treat as working assumptions until the customer 
 - 24-hour proof depends on staff recording on-site or remote diagnosis; missing status updates look like SLA breaches.
 - Pilot of 3 technicians vs 12 may hide overload; mid-January roll-out is a second delivery, not automatic.
 - Tracking link without an account can leak job details if the URL is guessable (security not specified).
-
----
-
-## Open questions
-
-1. What is the request status list (including how “on site” and “remote diagnosis completed” are recorded)?
-2. Who may assign and reassign (dispatcher only, or also ops manager / technician)?
-3. Which fields besides phone and system ID are mandatory (name, address, description, photo)?
-4. Timezone for the 24-hour clock?
-5. Does “of the request” start at FixFlow create, or at first WhatsApp/call (not in the system)?
-6. How staff sign in (password, magic link, SSO)?
-7. How long to keep requests, photos, and audit records?
-8. Is a photo required or optional?
-9. Which SMS provider, and who pays?
-10. How is the tracking link protected (secret token vs phone + system ID only)?
-11. Google Sheet: replace on go-live, or run in parallel?
-12. Offline use on the roof, or online-only?
-13. Native mobile app, or phone browser?
-14. Confirm mid-January means January 2027 after the 1 December 2026 pilot.
-15. Who may mark remote diagnosis completed?

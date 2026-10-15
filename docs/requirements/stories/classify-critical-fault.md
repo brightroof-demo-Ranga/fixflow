@@ -44,10 +44,3 @@ Then that request is not recorded as a critical SLA breach
 Given I am a signed-in dispatcher and the problem description does not state zero output and does not include smoke, burning smell, sparks, or exposed wiring  
 When I save the request without marking it critical  
 Then the stored request is not critical
-
-## Open questions
-
-- Can the customer self-select critical on the public form, or only the dispatcher?
-- Must the system auto-flag from keywords, or is classification always manual? AC2 and AC3 only require that a dispatcher save succeeds.
-- Is “zero output” versus safety sign stored as a reason code?
-- May a dispatcher mark critical when the description matches neither workshop case?

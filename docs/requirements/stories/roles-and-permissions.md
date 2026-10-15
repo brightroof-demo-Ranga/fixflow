@@ -44,9 +44,3 @@ Then both controls are present, and a valid on-behalf create and a valid assign 
 Given I am signed in as a technician and the request assignee is technician A  
 When I try to change the assignee to a different technician  
 Then the assignee remains technician A
-
-## Open questions
-
-- May an ops manager also assign, reassign, and log on behalf, or only view reports and audit?
-- Who creates and changes staff roles?
-- Exact permission matrix beyond AC2–AC5 is not in the workshop.
