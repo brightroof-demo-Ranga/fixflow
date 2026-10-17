@@ -256,3 +256,70 @@ test("FIX-23 AC11: completed from On site or Remote diagnosis completed stores t
     expect(events[0]?.at.toISOString()).toBe(savedAt.toISOString());
   }
 });
+
+test("FIX-23 AC6: a submit that never reaches the server stores neither timestamp", async () => {
+  const dispatcherId = await createStaff("dispatcher", "Ada Dispatch");
+  const technicianId = await createStaff("technician", "Ben Tech");
+  const requestId = await createRequest();
+  await assign(requestId, technicianId, dispatcherId, new Date("2026-10-15T08:00:00.000Z"));
+  const failedAt = new Date("2026-10-15T09:00:00.000Z");
+  const { setClock } = await import("./clock");
+  setClock(() => failedAt);
+
+  const { submitJobStatus } = await import("./submit-job-status");
+  for (const status of ["on_site", "remote_diagnosis_completed"] as const) {
+    const result = await submitJobStatus(requestId, status, async () => {
+      throw new Error("offline");
+    });
+    expect(result.saved).toBe(false);
+  }
+
+  const { getDb } = await import("./db");
+  const request = await getDb().serviceRequest.findUnique({ where: { id: requestId } });
+  expect(request?.onSiteAt).toBeNull();
+  expect(request?.remoteDiagnosisCompletedAt).toBeNull();
+  expect(request?.status).toBe("assigned");
+  expect(await getDb().statusEvent.count({ where: { requestId } })).toBe(0);
+});
+
+test("FIX-23 AC7: a later successful save stores that status at the new server time", async () => {
+  const dispatcherId = await createStaff("dispatcher", "Ada Dispatch");
+  const technicianId = await createStaff("technician", "Ben Tech");
+  const requestId = await createRequest();
+  await assign(requestId, technicianId, dispatcherId, new Date("2026-10-15T08:00:00.000Z"));
+  const failedAt = new Date("2026-10-15T09:00:00.000Z");
+  const savedAt = new Date("2026-10-15T11:15:00.000Z");
+  const { setClock } = await import("./clock");
+  setClock(() => failedAt);
+
+  const { submitJobStatus } = await import("./submit-job-status");
+  const failed = await submitJobStatus(requestId, "on_site", async () => {
+    throw new Error("offline");
+  });
+  expect(failed.saved).toBe(false);
+
+  setClock(() => savedAt);
+  const { POST } = await import("../app/api/requests/[id]/status/route");
+  const { createSession } = await import("./session");
+  const token = await createSession(technicianId);
+  const response = await POST(
+    new Request(`http://localhost/api/requests/${requestId}/status`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `fixflow_session=${token}`,
+      },
+      body: JSON.stringify({ status: "on_site" }),
+    }),
+    { params: Promise.resolve({ id: requestId }) },
+  );
+  expect(response.status).toBe(200);
+  const body = (await response.json()) as { changed: boolean };
+  expect(body.changed).toBe(true);
+
+  const { getDb } = await import("./db");
+  const request = await getDb().serviceRequest.findUnique({ where: { id: requestId } });
+  expect(request?.status).toBe("on_site");
+  expect(request?.onSiteAt?.toISOString()).toBe(savedAt.toISOString());
+  expect(request?.onSiteAt?.toISOString()).not.toBe(failedAt.toISOString());
+});
