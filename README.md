@@ -24,6 +24,14 @@ A signed-in dispatcher assigns a technician at `/dispatch/requests/{id}`. `POST 
 
 A signed-out caller gets the sign-in challenge and no request data. A technician or an ops manager who assigns writes nothing. Assigning a dispatcher or an ops manager leaves the assignee unchanged. Assigning on a cancelled request leaves the assignee unchanged and the status cancelled. A completed request is left unchanged.
 
+## Technician update job
+
+A signed-in technician opens current jobs at `/technician/jobs` and one job at `/technician/jobs/{id}`. Both screens are usable at 390 CSS pixels wide. `GET /api/technician/jobs` returns only that technician's current assignments, each with its request id. A request assigned to someone else, including one reassigned away, is not listed.
+
+`POST /api/requests/{id}/status` accepts `on_site`, `remote_diagnosis_completed`, or `completed` from the current assignee. On site stores `onSiteAt`. Remote diagnosis completed stores `remoteDiagnosisCompletedAt`. Completed stores `completedAt`, and only when the status is already On site or Remote diagnosis completed. Each timestamp is the server time of that successful save. Status is `cancelled` when `cancelledAt` is set, otherwise `completed` when `completedAt` is set, otherwise whichever of the two response timestamps is later, otherwise `assigned` when a current assignment exists, otherwise `not_assigned`. Each successful change appends a `StatusEvent`.
+
+A submit that never reaches the server writes no timestamp. The next successful save uses the later server time. A technician who is not the current assignee writes nothing, and the assignee stays as it was. A cancelled request stays cancelled. A signed-out caller gets the sign-in challenge. A dispatcher or an ops manager who posts a status writes nothing.
+
 ## Getting Started
 
 First, run the development server:
