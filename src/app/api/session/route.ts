@@ -6,6 +6,7 @@ import {
   createSession,
   deleteSession,
   findStaffByEmail,
+  sessionTokenFromHeader,
 } from "@/lib/session";
 import { isStaffRole } from "@/lib/staff-paths";
 
@@ -19,25 +20,6 @@ function sessionCookie(value: string, maxAge: number) {
     secure: process.env.NODE_ENV === "production",
     maxAge,
   };
-}
-
-function readCookie(header: string | null, name: string) {
-  if (!header) {
-    return null;
-  }
-  for (const part of header.split(";")) {
-    const separator = part.indexOf("=");
-    if (separator === -1) {
-      continue;
-    }
-    const key = part.slice(0, separator).trim();
-    if (key !== name) {
-      continue;
-    }
-    const value = decodeURIComponent(part.slice(separator + 1).trim());
-    return value === "" ? null : value;
-  }
-  return null;
 }
 
 export async function POST(request: Request) {
@@ -64,7 +46,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  await deleteSession(readCookie(request.headers.get("cookie"), SESSION_COOKIE));
+  await deleteSession(sessionTokenFromHeader(request.headers.get("cookie")));
   const response = NextResponse.json({ signedIn: false });
   response.cookies.set(sessionCookie("", 0));
   return response;

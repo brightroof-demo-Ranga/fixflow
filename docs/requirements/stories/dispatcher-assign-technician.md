@@ -2,7 +2,7 @@
 jira: FIX-21
 epic: Dispatch and assign
 epic_key: FIX-11
-status: draft
+status: in-progress
 version: 3
 last_synced: 2026-10-12
 ---
@@ -66,3 +66,11 @@ Then the request stores the expected arrival timestamp from this save
 Given I am signed in as a dispatcher and exactly 12 staff users have the technician role  
 When I open the list of people I can assign  
 Then the list contains those 12 users and no one else
+
+## Assignment rules
+
+The current assignee is the assignment row whose `supersededAt` is empty. That row's `assignedAt` is the time of the save that created it. A later assignment sets `supersededAt` on the previous current row.
+
+`expectedArrivalAt` on the current row is the timestamp sent with that save. A save that omits it stores no expected arrival on the new current row.
+
+A signed-out user or a technician who assigns leaves the assignee unchanged. Assigning a dispatcher or an ops manager leaves the assignee unchanged. A cancelled request keeps its assignee and stays cancelled.

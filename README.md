@@ -16,6 +16,14 @@ The route does not call a Google Sheet, a WhatsApp API, or email. It does not re
 
 Local development uses SQLite at `prisma/dev.db`. `npm test` generates the Prisma client and runs the unit tests.
 
+## Dispatcher assign technician
+
+A signed-in dispatcher assigns a technician at `/dispatch/requests/{id}`. `POST /api/requests/{id}/assignments` inserts an assignment row. The current assignee is the row whose `supersededAt` is empty, and that row's `assignedAt` is the time of that save. The previous current row, if any, receives `supersededAt`. The first assignment on a request that is not assigned sets the status to `assigned`. A later assignment replaces the assignee and leaves the status as it was.
+
+`expectedArrivalAt` is stored on the current row when that save sends one. A save that omits it stores no expected arrival. `GET /api/technicians` returns technician-role staff as id and name. The list has no customer phone numbers or system IDs.
+
+A signed-out caller gets the sign-in challenge and no request data. A technician or an ops manager who assigns writes nothing. Assigning a dispatcher or an ops manager leaves the assignee unchanged. Assigning on a cancelled request leaves the assignee unchanged and the status cancelled. A completed request is left unchanged.
+
 ## Getting Started
 
 First, run the development server:
