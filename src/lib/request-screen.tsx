@@ -3,10 +3,12 @@ import { missingFieldSentences } from "./request-fields";
 
 export function CustomerRequestScreen({
   missing = [],
+  notice,
   requestId,
   form,
 }: {
   missing?: string[];
+  notice?: string;
   requestId?: string;
   form?: ReactNode;
 }) {
@@ -25,7 +27,11 @@ export function CustomerRequestScreen({
       <p className="text-zinc-600 dark:text-zinc-400">
         Enter a phone number, a system ID, and a problem description. No account is required.
       </p>
-      {missing.length > 0 ? (
+      {notice ? (
+        <p role="alert" className="text-sm">
+          {notice}
+        </p>
+      ) : missing.length > 0 ? (
         <p role="alert" className="text-sm">
           {missingFieldSentences(missing)}
         </p>

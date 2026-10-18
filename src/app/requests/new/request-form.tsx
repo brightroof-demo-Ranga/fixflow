@@ -4,8 +4,11 @@ import { useState } from "react";
 import { CustomerRequestScreen } from "@/lib/request-screen";
 import { missingIntakeFields } from "@/lib/request-fields";
 
+const submitFailed = "The request was not submitted. Try again.";
+
 export function RequestForm() {
   const [missing, setMissing] = useState<string[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -20,23 +23,40 @@ export function RequestForm() {
     const absent = missingIntakeFields(input);
     if (absent.length > 0) {
       setMissing(absent);
+      setNotice(null);
       return;
     }
 
+    setMissing([]);
+    setNotice(null);
     setPending(true);
-    const response = await fetch("/api/requests", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(input),
-    });
-    const body = (await response.json()) as { requestId?: string; missing?: string[] };
-    if (!response.ok || typeof body.requestId !== "string") {
-      setMissing(body.missing ?? ["phone number", "system ID", "problem description"]);
+    try {
+      const response = await fetch("/api/requests", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      let body: { requestId?: string; missing?: string[] } = {};
+      try {
+        body = (await response.json()) as { requestId?: string; missing?: string[] };
+      } catch {
+        setNotice(submitFailed);
+        return;
+      }
+      if (Array.isArray(body.missing) && body.missing.length > 0) {
+        setMissing(body.missing);
+        return;
+      }
+      if (!response.ok || typeof body.requestId !== "string") {
+        setNotice(submitFailed);
+        return;
+      }
+      setRequestId(body.requestId);
+    } catch {
+      setNotice(submitFailed);
+    } finally {
       setPending(false);
-      return;
     }
-    setRequestId(body.requestId);
-    setPending(false);
   }
 
   if (requestId) {
@@ -46,6 +66,7 @@ export function RequestForm() {
   return (
     <CustomerRequestScreen
       missing={missing}
+      notice={notice ?? undefined}
       form={
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1 text-sm" htmlFor="phone">

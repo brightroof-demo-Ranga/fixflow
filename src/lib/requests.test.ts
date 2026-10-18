@@ -399,3 +399,87 @@ test("FIX-19 AC12: a weekday submit is stored and is not rejected for office hou
     expect(stored?.createdAt.toISOString()).toBe(createdAt.toISOString());
   }
 });
+
+test("FIX-19: overlapping first submits for a new phone each store a request", async () => {
+  const phone = "0778181818";
+  const responses = await Promise.all([
+    postRequest({
+      phone,
+      systemId: "SYS-RACE",
+      description: "First overlapping report",
+    }),
+    postRequest({
+      phone,
+      systemId: "SYS-RACE",
+      description: "Second overlapping report",
+    }),
+  ]);
+
+  expect(responses.map((response) => response.status)).toEqual([201, 201]);
+  const bodies = (await Promise.all(responses.map((response) => response.json()))) as {
+    requestId: string;
+  }[];
+  expect(bodies[0].requestId).not.toBe(bodies[1].requestId);
+
+  const stored = await Promise.all(bodies.map((body) => storedRequest(body.requestId)));
+  expect(stored.map((row) => row?.description).sort()).toEqual([
+    "First overlapping report",
+    "Second overlapping report",
+  ]);
+  expect(stored.every((row) => row?.customer.phone === phone)).toBe(true);
+  expect(stored.every((row) => row?.system.systemId === "SYS-RACE")).toBe(true);
+  expect(await requestCount()).toBe(2);
+
+  const { getDb } = await import("./db");
+  expect(await getDb().customer.count({ where: { phone } })).toBe(1);
+  expect(await getDb().system.count({ where: { systemId: "SYS-RACE" } })).toBe(1);
+});
+
+test("FIX-19: a different system or a different phone still stores a new request", async () => {
+  const { setClock } = await import("./clock");
+  const firstAt = new Date("2026-10-12T09:00:00.000Z");
+  setClock(() => firstAt);
+  const firstResponse = await postRequest({
+    phone: "0774242424",
+    systemId: "SYS-ROOF-A",
+    description: "Roof A",
+  });
+  const firstBody = (await firstResponse.json()) as { requestId: string };
+  const snapshot = JSON.parse(JSON.stringify(await storedRequest(firstBody.requestId)));
+
+  const secondAt = new Date("2026-10-12T10:00:00.000Z");
+  setClock(() => secondAt);
+  const otherRoof = await postRequest({
+    phone: "0774242424",
+    systemId: "SYS-ROOF-B",
+    description: "Roof B",
+  });
+  expect(otherRoof.status).toBe(201);
+  const otherRoofBody = (await otherRoof.json()) as { requestId: string };
+  expect(otherRoofBody.requestId).not.toBe(firstBody.requestId);
+  expect(JSON.parse(JSON.stringify(await storedRequest(firstBody.requestId)))).toEqual(snapshot);
+
+  const otherRoofRow = await storedRequest(otherRoofBody.requestId);
+  expect(otherRoofRow?.description).toBe("Roof B");
+  expect(otherRoofRow?.customer.id).toBe(snapshot.customer.id);
+  expect(otherRoofRow?.system.systemId).toBe("SYS-ROOF-B");
+
+  const otherPhone = await postRequest({
+    phone: "0774343434",
+    systemId: "SYS-ROOF-A",
+    description: "Other phone, roof A",
+  });
+  expect(otherPhone.status).toBe(201);
+  const otherPhoneBody = (await otherPhone.json()) as { requestId: string };
+  expect(JSON.parse(JSON.stringify(await storedRequest(firstBody.requestId)))).toEqual(snapshot);
+
+  const otherPhoneRow = await storedRequest(otherPhoneBody.requestId);
+  expect(otherPhoneRow?.customer.phone).toBe("0774343434");
+  expect(otherPhoneRow?.customer.id).not.toBe(snapshot.customer.id);
+  expect(otherPhoneRow?.system.id).toBe(snapshot.system.id);
+  expect(await requestCount()).toBe(3);
+
+  const { getDb } = await import("./db");
+  expect(await getDb().customer.count()).toBe(2);
+  expect(await getDb().system.count()).toBe(2);
+});
