@@ -94,3 +94,5 @@ A valid submit stores a `ServiceRequest` with source `customer_form`, a new requ
 Phone and system ID are required. An empty phone number or system ID stores nothing, issues no request id, and the screen names each missing field. Name, site address, email, and photo may be absent. A second open request for the same phone and system ID is a new row, and the first row stays as it was. A system ID that is not already stored is accepted.
 
 The route does not call a Google Sheet, a WhatsApp API, or email. It does not reject a weekend, a weekday, 30 November 2026, or 1 December 2026.
+
+If the submit does not reach the server, or the server does not accept it and does not name a missing field, the screen stays on the form and shows "The request was not submitted. Try again." It does not name the phone number, system ID, or problem description as missing.

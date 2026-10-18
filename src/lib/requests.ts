@@ -29,27 +29,25 @@ export async function createPublicRequest(input: PublicRequestInput) {
   const createdAt = now();
 
   const requestId = await getDb().$transaction(async (tx) => {
-    const existingCustomer = await tx.customer.findUnique({ where: { phone } });
-    const customer =
-      existingCustomer ??
-      (await tx.customer.create({
-        data: {
-          id: crypto.randomUUID(),
-          phone,
-          name,
-          email,
-        },
-      }));
+    const customer = await tx.customer.upsert({
+      where: { phone },
+      create: {
+        id: crypto.randomUUID(),
+        phone,
+        name,
+        email,
+      },
+      update: {},
+    });
 
-    const existingSystem = await tx.system.findUnique({ where: { systemId } });
-    if (!existingSystem) {
-      await tx.system.create({
-        data: {
-          id: crypto.randomUUID(),
-          systemId,
-        },
-      });
-    }
+    await tx.system.upsert({
+      where: { systemId },
+      create: {
+        id: crypto.randomUUID(),
+        systemId,
+      },
+      update: {},
+    });
 
     const id = crypto.randomUUID();
     await tx.serviceRequest.create({
