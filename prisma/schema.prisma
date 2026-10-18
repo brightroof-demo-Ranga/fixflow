@@ -16,6 +16,7 @@ model StaffUser {
   sessions              Session[]
   technicianAssignments Assignment[] @relation("AssignmentTechnician")
   dispatchedAssignments Assignment[] @relation("AssignmentDispatcher")
+  statusEvents          StatusEvent[]
 }
 
 model Session {
@@ -57,9 +58,22 @@ model ServiceRequest {
   cancelledAt                DateTime?
   createTimestampResult      String?
   originalContactResult      String?
-  customer                   Customer     @relation(fields: [customerId], references: [id])
-  system                     System       @relation(fields: [systemId], references: [systemId])
+  customer                   Customer      @relation(fields: [customerId], references: [id])
+  system                     System        @relation(fields: [systemId], references: [systemId])
   assignments                Assignment[]
+  statusEvents               StatusEvent[]
+}
+
+model StatusEvent {
+  id               String         @id
+  requestId        String
+  status           String
+  actorStaffUserId String?
+  at               DateTime
+  request          ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor            StaffUser?     @relation(fields: [actorStaffUserId], references: [id])
+
+  @@index([requestId])
 }
 
 model Assignment {

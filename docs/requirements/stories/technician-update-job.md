@@ -2,7 +2,7 @@
 jira: FIX-23
 epic: Field updates
 epic_key: FIX-12
-status: draft
+status: in-progress
 version: 4
 last_synced: 2026-10-15
 ---
